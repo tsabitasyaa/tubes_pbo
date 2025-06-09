@@ -1,12 +1,7 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package persistence;
 
 import java.io.*;
 import java.nio.file.*;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -17,9 +12,25 @@ public class CsvStore {
     private static final Path DATA = Paths.get("data");
     private static final Path USERS = DATA.resolve("users.csv");
     private static final Path TEAMS = DATA.resolve("teams.csv");
-     // id,nama,memberIds|pipa
 
-    /* ---------- users ---------- */
+    // Menyimpan user
+    public static void appendUser(model.User u) throws IOException {
+        Files.createDirectories(DATA);
+        try (BufferedWriter bw = Files.newBufferedWriter(
+                USERS, StandardOpenOption.CREATE, StandardOpenOption.APPEND))
+        {
+            // format: userId,email,password,nama,teamIds
+            String line = String.join(",", u.getId(),
+                                       u.getEmail(),
+                                       u.getPassword(),
+                                       u.getName(),
+                                       String.join("|", u.getTeamIds()));
+            bw.write(line);
+            bw.newLine();
+        }
+    }
+
+    // Memuat user
     public static List<User> loadUsers() throws IOException {
         if (!Files.exists(USERS)) return List.of();
 
@@ -39,50 +50,24 @@ public class CsvStore {
         }
     }
 
+    // Mencari user berdasarkan email
     public static Optional<User> findUserByEmail(String email) throws IOException {
         return loadUsers().stream()
                           .filter(u -> u.getEmail().equalsIgnoreCase(email))
                           .findFirst();
     }
 
-    /* ---------- events ---------- */
+    // Membuat file CSV event user
     private static Path userEventFile(String userId){
         return DATA.resolve("events_" + userId + ".csv");
     }
+
+    // Membuat file CSV event tim
     private static Path teamEventFile(String teamId){
         return DATA.resolve("events_team_" + teamId + ".csv");
     }
 
-    public static List<Event> loadEventsForUser(String uid) throws IOException {
-        Path p = userEventFile(uid);
-        if (!Files.exists(p)) return List.of();
-        try (BufferedReader br = Files.newBufferedReader(p)) {
-            return br.lines().map(Event::fromCsv).collect(Collectors.toList());
-        }
-    }
-    public static List<Event> loadEventsForTeam(String tid) throws IOException {
-        Path p = teamEventFile(tid);
-        if (!Files.exists(p)) return List.of();
-        try (BufferedReader br = Files.newBufferedReader(p)) {
-            return br.lines().map(Event::fromCsv).collect(Collectors.toList());
-        }
-    }
-
-    public static void appendUser(model.User u) throws IOException {
-        Files.createDirectories(DATA);
-        try (BufferedWriter bw = Files.newBufferedWriter(
-                USERS, StandardOpenOption.CREATE, StandardOpenOption.APPEND))
-        {
-            // format: userId,email,password,nama,teamIds
-            String line = String.join(",", u.getId(),
-                                       u.getEmail(),
-                                       u.getPassword(),
-                                       u.getName(),
-                                       String.join("|", u.getTeamIds()));
-            bw.write(line);
-            bw.newLine();
-        }
-    }
+    // Menyimpan event ke user event file
     public static void appendEventToUser(String uid, Event e) throws IOException {
         Files.createDirectories(DATA);
         try (BufferedWriter bw = Files.newBufferedWriter(
@@ -91,6 +76,8 @@ public class CsvStore {
             bw.newLine();
         }
     }
+
+    // Menyimpan event ke team event file
     public static void appendEventToTeam(String tid, Event e) throws IOException {
         Files.createDirectories(DATA);
         try (BufferedWriter bw = Files.newBufferedWriter(
@@ -100,89 +87,7 @@ public class CsvStore {
         }
     }
 
-    /* ---------- team helpers ---------- */
-    public static List<String> loadTeamMembers(String teamId) throws IOException {
-        if (!Files.exists(TEAMS)) return List.of();
-        try (BufferedReader br = Files.newBufferedReader(TEAMS)) {
-            return br.lines()
-                     .map(l -> l.split(",", -1))
-                     .filter(t -> t[0].equals(teamId))
-                     .map(t -> t[2].split("\\|"))
-                     .findFirst()
-                     .map(arr -> Arrays.asList(arr))
-                     .orElse(List.of());
-        }
-    }
-    
-    public static List<String[]> loadTeams() throws IOException {
-       if (!Files.exists(TEAMS)) return List.of();
-       try (BufferedReader br = Files.newBufferedReader(TEAMS)) {
-           return br.lines()
-                    .map(String::trim)
-                    .filter(l -> !l.isBlank())
-                    .map(l -> l.split(",", 4)) // [0]=id, [1]=name, [2]=adminId, [3]=memberIds
-                    .collect(Collectors.toList());
-       }
-    }
-    
-    /* simpan tim baru */
-    public static void appendTeam(String id, String name, String adminId, List<String> memberIds) throws IOException {
-        Files.createDirectories(DATA);
-        try (BufferedWriter bw = Files.newBufferedWriter(
-                TEAMS, StandardOpenOption.CREATE, StandardOpenOption.APPEND))
-        {
-            // Format: teamId,teamName,adminId,member1|member2|...
-            bw.write(String.join(",", id, name, adminId, String.join("|", memberIds)));
-            bw.newLine();
-        }
-    }
-
-    /* update kolom teamIds milik user (write‑all) */
-    public static void overwriteUsers(List<User> newList) throws IOException {
-        Files.createDirectories(DATA);
-        try (BufferedWriter bw = Files.newBufferedWriter(USERS, StandardOpenOption.TRUNCATE_EXISTING)) {
-            for (User u : newList) {
-                bw.write(String.join(",", u.getId(), u.getEmail(),
-                                     u.getPassword(), u.getName(),
-                                     String.join("|", u.getTeamIds())));
-                bw.newLine();
-            }
-        }
-    }
-    
-    public static void addMembersToTeam(String teamId, List<String> newMemberIds) throws IOException {
-        List<String> lines = Files.readAllLines(TEAMS);
-        List<String> updatedLines = new ArrayList<>();
-
-        for (String line : lines) {
-            String[] parts = line.split(",");
-            if (parts.length < 3) {
-                updatedLines.add(line);
-                continue;
-            }
-
-            if (parts[0].equals(teamId)) {
-                String members = parts[2].trim();
-                Set<String> memberSet = new LinkedHashSet<>();
-
-                if (!members.isEmpty()) {
-                    memberSet.addAll(Arrays.asList(members.split("\\|")));
-                }
-                memberSet.addAll(newMemberIds);
-
-                // update kolom anggota (index 2)
-                parts[3] = String.join("|", memberSet);
-
-                String updatedLine = String.join(",", parts);
-                updatedLines.add(updatedLine);
-            } else {
-                updatedLines.add(line);
-            }
-        }
-
-        Files.write(TEAMS, updatedLines);
-    }
-    
+    // Memuat event user
     public static List<Event> loadUserEvents(String userId) throws IOException {
         Path file = DATA.resolve("events_" + userId + ".csv");
         if (!Files.exists(file)) return List.of();
@@ -196,6 +101,7 @@ public class CsvStore {
         }
     }
 
+    // Memuat event tim
     public static List<Event> loadTeamEvents(String teamId) throws IOException {
         Path file = DATA.resolve("events_team_" + teamId + ".csv");
         if (!Files.exists(file)) return List.of();
@@ -208,6 +114,55 @@ public class CsvStore {
                      .toList();
         }
     }
+
+    // Menyimpan tim
+    public static void appendTeam(String id, String name, String adminId, List<String> memberIds) throws IOException {
+        Files.createDirectories(DATA);
+        try (BufferedWriter bw = Files.newBufferedWriter(
+                TEAMS, StandardOpenOption.CREATE, StandardOpenOption.APPEND))
+        {
+            // Format: teamId,teamName,adminId,member1|member2|...
+            bw.write(String.join(",", id, name, adminId, String.join("|", memberIds)));
+            bw.newLine();
+        }
+    }
+
+    // Memuat tim
+    public static List<String[]> loadTeams() throws IOException {
+       if (!Files.exists(TEAMS)) return List.of();
+       try (BufferedReader br = Files.newBufferedReader(TEAMS)) {
+           return br.lines()
+                    .map(String::trim)
+                    .filter(l -> !l.isBlank())
+                    .map(l -> l.split(",", 4)) // [0]=id, [1]=name, [2]=adminId, [3]=memberIds
+                    .collect(Collectors.toList());
+       }
+    }
+
+    // Memuat anggota tim
+    public static List<String> loadTeamMembers(String teamId) throws IOException {
+        if (!Files.exists(TEAMS)) return List.of();
+        try (BufferedReader br = Files.newBufferedReader(TEAMS)) {
+            return br.lines()
+                     .map(l -> l.split(",", -1))
+                     .filter(t -> t[0].equals(teamId))
+                     .map(t -> t[2].split("\\|"))
+                     .findFirst()
+                     .map(arr -> Arrays.asList(arr))
+                     .orElse(List.of());
+        }
+    }
+
+    // update kolom teamIds milik user
+    public static void overwriteUsers(List<User> newList) throws IOException {
+        Files.createDirectories(DATA);
+        try (BufferedWriter bw = Files.newBufferedWriter(USERS, StandardOpenOption.TRUNCATE_EXISTING)) {
+            for (User u : newList) {
+                bw.write(String.join(",", u.getId(), u.getEmail(),
+                                     u.getPassword(), u.getName(),
+                                     String.join("|", u.getTeamIds())));
+                bw.newLine();
+            }
+        }
+    }
 }
-
-
