@@ -31,7 +31,7 @@ public class SchedulePage extends javax.swing.JFrame {
         jLabel2.setText(sch.getUser().getName() + "'s schedule");
     }
 
-    // view schedule
+    // Menampilkan schedule
     private void viewSchedule() {
         try {
             // Muat semua tim untuk mendapatkan nama tim
