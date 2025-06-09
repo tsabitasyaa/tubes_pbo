@@ -1,23 +1,12 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package view;
 
-import view.HomePage;
 import service.Scheduler;
 
-/**
- *
- * @author yelisalorian
- */
-public class profilePage extends javax.swing.JFrame {
+public class ProfilePage extends javax.swing.JFrame {
     private final Scheduler sch;
 
-    /**
-     * Creates new form profilePage
-     */
-    public profilePage(Scheduler sch) {
+    // Konstruktor
+    public ProfilePage(Scheduler sch) {
         this.sch = sch;
         initComponents();
         updateUser();
