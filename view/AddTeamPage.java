@@ -27,7 +27,7 @@ public class AddTeamPage extends javax.swing.JFrame {
     }
 
     // Menambahkan tim
-    private void AddTeam() {
+    public void AddTeam() {
         try {
             String namaTim = getNamaTeam();
             String emailInput = getEmailAnggota();
