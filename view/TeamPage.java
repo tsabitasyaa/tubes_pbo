@@ -9,7 +9,7 @@ import javax.swing.JOptionPane;
 
 public class TeamPage extends javax.swing.JFrame {
     private final Scheduler sch;
-    DefaultListModel<String> dlmTeam;
+    private DefaultListModel<String> dlmTeam;
     
     // Konstruktor
     public TeamPage(Scheduler sch) {
