@@ -25,6 +25,23 @@ public class AddTeamPage extends javax.swing.JFrame {
     public String getEmailAnggota(){
         return jTextFieldAnggota.getText().trim();
     }
+
+    // Menambahkan tim
+    private void AddTeam() {
+        try {
+            String namaTim = getNamaTeam();
+            String emailInput = getEmailAnggota();
+            List<String> emails = Arrays.asList(emailInput.split("\\s*,\\s*"));
+
+            sch.addTeam(namaTim, emails);
+
+            JOptionPane.showMessageDialog(this, "Tim berhasil dibuat!");
+            dispose();
+            new TeamPage(sch).setVisible(true);
+        } catch (IOException | IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, "Gagal: " + ex.getMessage());
+        }
+    }
     
     /**
      * This method is called from within the constructor to initialize the form.
@@ -137,18 +154,7 @@ public class AddTeamPage extends javax.swing.JFrame {
 
     private void jButtonAddActionPerformed(java.awt.event.ActionEvent evt) {                                           
         // TODO add your handling code here:
-        try {
-            String namaTim = getNamaTeam();
-            String emailInput = getEmailAnggota();
-            List<String> emails = Arrays.asList(emailInput.split("\\s*,\\s*"));
-
-            sch.addTeam(namaTim, emails);
-            JOptionPane.showMessageDialog(this, "Tim berhasil dibuat!");
-            dispose();
-            new TeamPage(sch).setVisible(true);
-        } catch (IOException | IllegalArgumentException ex) {
-            JOptionPane.showMessageDialog(this, "Gagal: " + ex.getMessage());
-        }
+        AddTeam();
     }                                                                                          
 
     private void jButtonBackActionPerformed(java.awt.event.ActionEvent evt) {                                            
