@@ -1,13 +1,5 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package model;
 
-/**
- *
- * @author tsabi
- */
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -38,4 +30,5 @@ public class TeamEvent extends Event {
             time.format(DateTimeFormatter.ISO_LOCAL_TIME),
             "true", teamId);
     }
+    
 }
