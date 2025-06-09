@@ -11,7 +11,7 @@ import java.time.format.DateTimeFormatter;
 
 public class SchedulePage extends javax.swing.JFrame {
     private final Scheduler sch;
-    DefaultListModel<String> dlmSchedule;
+    private DefaultListModel<String> dlmSchedule;
     
     // Konstruktor
     public SchedulePage(Scheduler sch) {
