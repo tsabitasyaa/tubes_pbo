@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package service;
 
 import model.Event;
@@ -29,6 +25,17 @@ public class Scheduler {
     public User getUser(){
         return current;
     }  
+
+    // Menambahkan user baru ke CsvStore
+    public void addUser(String email, String password, String nama) throws IOException {
+        if (CsvStore.findUserByEmail(email).isPresent()) {
+            throw new IllegalArgumentException("Email sudah terdaftar!");
+        }
+        
+        String id = "U" + UUID.randomUUID().toString().substring(0, 4);
+        User userBaru = new User(id, email, password, nama, "");
+        CsvStore.appendUser(userBaru);
+    } 
     
     // Autentikasi Login User
     public static User authenticate(String email, String password) {
@@ -44,7 +51,7 @@ public class Scheduler {
         return null;
     }
 
-
+    // Memuat semua event dari CsvStore
     public List<Event> loadAllEvents() throws IOException {
         Map<String, Event> map = new LinkedHashMap<>();
 
@@ -66,6 +73,18 @@ public class Scheduler {
                   .toList();
     }
 
+    // Mendapatkan nama tim
+    public Map<String, String> getTeamNames() throws IOException {
+        Map<String, String> teamNames = new HashMap<>();
+        for (String[] row : CsvStore.loadTeams()) {
+            if (row.length >= 2) {
+                teamNames.put(row[0], row[1]); // key: teamId, value: teamName
+            }
+        }
+        return teamNames;
+    }  
+
+    // menambahkan event personal
     public void addPersonalEvent(String id, String title, 
                                  java.time.LocalDate date, 
                                  java.time.LocalTime time) throws IOException {
@@ -73,6 +92,7 @@ public class Scheduler {
         CsvStore.appendEventToUser(current.getId(), pe);
     }
 
+    // Menambahkan event team
     public void addTeamEvent(String teamId, String id, String title,
                               java.time.LocalDate date, 
                               java.time.LocalTime time) throws IOException {
@@ -84,11 +104,23 @@ public class Scheduler {
             CsvStore.appendEventToUser(memberId, copy);
         }
     }
-    
-    public void setCurrentUser(User updatedUser) {
-    this.current = updatedUser;
-    }
-    
+
+    // mendapatkan tim dari user
+    public List<String[]> getUserTeams() throws IOException {
+        List<String[]> result = new ArrayList<>();
+        List<String[]> allTeams = CsvStore.loadTeams(); // raw team data
+
+        for (String teamId : current.getTeamIds()) {
+            for (String[] row : allTeams) {
+                if (row.length >= 2 && row[0].equals(teamId)) {
+                    result.add(row); // row[0]=id, row[1]=name, ...
+                }
+            }
+        }
+        return result;
+    }    
+
+    // menambahkan tim
     public void addTeam(String teamName, List<String> memberEmails) throws IOException {
         // Ambil semua user dari CSV
         List<User> allUsers = CsvStore.loadUsers();
@@ -124,12 +156,12 @@ public class Scheduler {
         // Simpan ulang semua user
         CsvStore.overwriteUsers(allUsers);
 
-        // Update current user agar tim langsung terbaca di sesi ini
+        // Update current user
         Optional<User> updated = allUsers.stream()
                 .filter(u -> u.getId().equals(current.getId()))
                 .findFirst();
         updated.ifPresent(u -> this.current = u);
-    }   
+    }
     
 }
 
