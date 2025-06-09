@@ -13,7 +13,7 @@ public class HomePage extends javax.swing.JFrame {
     }
 
     // Update user
-    private void updateUser(){
+    public void updateUser(){
         jLabelUser.setText(sch.getUser().getName());
     }
     /**
